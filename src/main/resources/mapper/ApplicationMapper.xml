@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.internhub.mapper.ApplicationMapper">
+
+    <resultMap id="AppResult" type="com.internhub.entity.Application">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="jobId" column="job_id"/>
+        <result property="resumeUrl" column="resume_url"/>
+        <result property="status" column="status"/>
+        <result property="notes" column="notes"/>
+        <result property="appliedAt" column="applied_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="jobTitle" column="job_title"/>
+        <result property="companyName" column="company_name"/>
+    </resultMap>
+
+    <!-- 查询投递记录（关联岗位和公司信息） -->
+    <select id="findByUserId" resultMap="AppResult">
+        SELECT a.*, j.title AS job_title, c.name AS company_name
+        FROM applications a
+        LEFT JOIN jobs j ON a.job_id = j.id
+        LEFT JOIN companies c ON j.company_id = c.id
+        WHERE a.user_id = #{userId}
+        ORDER BY a.applied_at DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <select id="countByUserId" resultType="long">
+        SELECT COUNT(*) FROM applications WHERE user_id = #{userId}
+    </select>
+
+    <insert id="insert" parameterType="com.internhub.entity.Application" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO applications (user_id, job_id, resume_url, notes)
+        VALUES (#{userId}, #{jobId}, #{resumeUrl}, #{notes})
+    </insert>
+
+    <update id="updateStatus">
+        UPDATE applications
+        SET status = #{status}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <select id="countByUserAndJob" resultType="int">
+        SELECT COUNT(*) FROM applications WHERE user_id = #{userId} AND job_id = #{jobId}
+    </select>
+
+</mapper>

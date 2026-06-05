@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.internhub.mapper.JobMapper">
+
+    <resultMap id="JobResult" type="com.internhub.entity.Job">
+        <id property="id" column="id"/>
+        <result property="companyId" column="company_id"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="requirement" column="requirement"/>
+        <result property="salaryRange" column="salary_range"/>
+        <result property="location" column="location"/>
+        <result property="jobType" column="job_type"/>
+        <result property="status" column="status"/>
+        <result property="postedAt" column="posted_at"/>
+        <result property="deadline" column="deadline"/>
+        <result property="companyName" column="company_name"/>
+    </resultMap>
+
+    <!--
+      分页查询 + 多条件筛选
+      WHERE 1=1 是一个常用的动态 SQL 技巧：
+      后面所有条件都用 AND 开头，避免 NULL 参数导致"WHERE AND xxx"的语法错误
+    -->
+    <select id="findWithPage" resultMap="JobResult">
+        SELECT j.*, c.name AS company_name
+        FROM jobs j
+        LEFT JOIN companies c ON j.company_id = c.id
+        WHERE j.status = 'OPEN'
+        <if test="keyword != null and keyword != ''">
+            AND (j.title LIKE CONCAT('%', #{keyword}, '%')
+                 OR c.name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="location != null and location != ''">
+            AND j.location LIKE CONCAT('%', #{location}, '%')
+        </if>
+        <if test="jobType != null and jobType != ''">
+            AND j.job_type = #{jobType}
+        </if>
+        ORDER BY j.posted_at DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!--
+      统计记录数 — SQL 和分页查询条件一致，但不加 LIMIT
+      面试常见问题：为什么分页要查两次？一次查数据，一次统计总数。
+    -->
+    <select id="count" resultType="long">
+        SELECT COUNT(*)
+        FROM jobs j
+        LEFT JOIN companies c ON j.company_id = c.id
+        WHERE j.status = 'OPEN'
+        <if test="keyword != null and keyword != ''">
+            AND (j.title LIKE CONCAT('%', #{keyword}, '%')
+                 OR c.name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="location != null and location != ''">
+            AND j.location LIKE CONCAT('%', #{location}, '%')
+        </if>
+        <if test="jobType != null and jobType != ''">
+            AND j.job_type = #{jobType}
+        </if>
+    </select>
+
+    <!-- 查询单个岗位详情 -->
+    <select id="findById" resultMap="JobResult">
+        SELECT j.*, c.name AS company_name
+        FROM jobs j
+        LEFT JOIN companies c ON j.company_id = c.id
+        WHERE j.id = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.internhub.entity.Job" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO jobs (company_id, title, description, requirement, salary_range, location, job_type, deadline)
+        VALUES (#{companyId}, #{title}, #{description}, #{requirement}, #{salaryRange}, #{location}, #{jobType}, #{deadline})
+    </insert>
+
+    <update id="update" parameterType="com.internhub.entity.Job">
+        UPDATE jobs
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="requirement != null">requirement = #{requirement},</if>
+            <if test="salaryRange != null">salary_range = #{salaryRange},</if>
+            <if test="location != null">location = #{location},</if>
+            <if test="jobType != null">job_type = #{jobType},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="deadline != null">deadline = #{deadline},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM jobs WHERE id = #{id}
+    </delete>
+
+</mapper>

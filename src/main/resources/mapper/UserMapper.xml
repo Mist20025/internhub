@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.internhub.mapper.UserMapper">
+
+    <!--
+      resultMap：定义数据库字段到 Java 对象的映射关系
+      因为表字段是 snake_case（created_at），Java 是 camelCase（createdAt）
+      MyBatis 配置了 map-underscore-to-camel-case=true，可以直接自动映射
+    -->
+    <resultMap id="UserResult" type="com.internhub.entity.User">
+        <id property="id" column="id"/>
+        <result property="username" column="username"/>
+        <result property="password" column="password"/>
+        <result property="email" column="email"/>
+        <result property="phone" column="phone"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <!-- 根据用户名查询 -->
+    <select id="findByUsername" resultMap="UserResult">
+        SELECT id, username, password, email, phone, created_at
+        FROM users
+        WHERE username = #{username}
+    </select>
+
+    <!-- 插入新用户 -->
+    <insert id="insert" parameterType="com.internhub.entity.User" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (username, password, email, phone)
+        VALUES (#{username}, #{password}, #{email}, #{phone})
+    </insert>
+
+    <!-- 检查用户名是否存在 -->
+    <select id="countByUsername" resultType="int">
+        SELECT COUNT(*) FROM users WHERE username = #{username}
+    </select>
+
+</mapper>
